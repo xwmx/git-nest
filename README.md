@@ -1,7 +1,7 @@
 git-nest
 ========
 
-An improved git subtrees (hopefully).
+Improved git subtrees (hopefully).
 
 ## Caveats
 
