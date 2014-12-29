@@ -1,0 +1,407 @@
+#!/usr/bin/env bash
+#
+#        _ _                        _
+#   __ _(_) |_      _ __   ___  ___| |_
+#  / _` | | __|____| '_ \ / _ \/ __| __|
+# | (_| | | ||_____| | | |  __/\__ \ |_
+#  \__, |_|\__|    |_| |_|\___||___/\__|
+#  |___/
+#
+# Improved git subtrees.
+#
+# ------------------------------------------------------------------- dev notes
+
+# TODO: Usage (proposed):
+# - use git submodule syntax
+#   git nested add url target_directory
+# - or git clone syntax
+#   git nested clone url target_directory
+#   git nested branch_name # which branch to merge
+#   git nested pull # does git pull -s subtree
+#
+# consider creating a file like git submodules to track what's installed where.
+# perhaps the .gitnested file could also be used with a git nested rm command.
+#
+# references:
+# https://help.github.com/articles/about-git-subtree-merges/
+# http://git-scm.com/book/en/v1/Git-Tools-Subtree-Merging
+# http://blogs.atlassian.com/2013/05/alternatives-to-git-submodule-git-subtree/
+# https://github.com/git/git/blob/master/contrib/subtree/git-subtree.sh
+# https://github.com/apenwarr/git-subtree/blob/master/git-subtree.txt
+# http://git-scm.com/book/en/v2/Git-Tools-Submodules
+
+# --------------------------------------------------------------- end dev notes
+
+###############################################################################
+# Debug
+###############################################################################
+
+# _debug()
+#
+# Shortcut for testing against the existence of a $debug variable. Primarily
+# intended to be used before a printf statement.
+#
+# Usage:
+#   _debug && printf "Debug info"
+_debug() { [[ -n "$debug" ]]; }
+
+###############################################################################
+# Options
+###############################################################################
+
+# Get raw options for any commands that expect them.
+raw_options=$*
+
+# Initialize command options and arguments arrays.
+#
+# These contain any options and arguments that will be used by the commands.
+# Commands handle their own argument and option checks using the created arrays.
+command_options=()
+command_arguments=()
+
+while [ $# -gt 0 ]; do
+  opt="$1"
+  shift
+  case "$opt" in
+    -h|--help)
+      command="help"
+      ;;
+    --debug)
+      debug=1
+      ;;
+    -*|--*)
+      command_options+=("$opt")
+      ;;
+    *)
+      # The first non-option argument is assumed to be the command name.
+      # All subsequent arguments are added to $command_arguments.
+      if [[ -n $command ]]; then
+        command_arguments+=("$opt")
+      else
+        command=$opt
+      fi
+      ;;
+  esac
+done
+
+_debug && printf "\$command: %s\n" "$command"
+_debug && printf "\$raw_options: %s\n" "$raw_options"
+_debug && printf "\$command_options: %s\n" "${command_options[*]}"
+_debug && printf "\$command_arguments: %s\n" "${command_arguments[*]}"
+
+###############################################################################
+# Environment
+###############################################################################
+
+# $_me
+#
+# Set to the program's basename.
+_me=$(basename "$0")
+
+_debug && printf "\$_me: %s\n" "$_me"
+
+###############################################################################
+# Main
+###############################################################################
+
+# _main()
+#
+# Usage:
+#   _main
+#
+# The primary function for starting the program.
+#
+# NOTE: must be called at end of program after all tasks have been defined.
+_main() {
+  # If $command is blank, then set to help
+  if [[ -z $command ]]; then
+    command="help"
+  fi
+
+  # Get the list of defined tasks.
+  defined_commands=($(commands --raw))
+
+  # Run the command and pass the task arguments.
+  if ( _contains "$command" "${defined_commands[@]}" ); then
+    $command "${command_arguments[@]}"
+  else
+    printf "Unknown command: %s\n" "$command"
+    exit 1
+  fi
+}
+
+###############################################################################
+# Utility Functions
+###############################################################################
+
+# _function_exists()
+#
+# Takes a potential function name as an argument and returns whether a function
+# exists with that name.
+_function_exists() {
+  [ "$(type -t "$1")" == 'function' ]
+}
+
+# _contains()
+#
+# Takes an item and a list and determines whether the list contains the item.
+#
+# Usage:
+#   _contains "$item" "${list[@]}"
+_contains() {
+  local e
+  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  return 1
+}
+
+###############################################################################
+# desc
+###############################################################################
+
+# desc()
+#
+# Usage:
+#   desc command "description"
+#
+# Create a description for a specified command name. The command description
+# text can be passed as the second argument or as standard input.
+#
+# To make the description text available to other functions, desc() assigns the
+# text to a variable with the format $_desc_function_name
+desc() {
+  [[ -z $1 ]] && printf "desc: No command name specified.\n" && exit 1
+  if [[ -n $2 ]]; then
+    read -d '' "_desc_$1" <<EOM
+$2
+EOM
+  else
+    read -d '' "_desc_$1"
+  fi
+}
+
+# _print_desc()
+#
+# Usage:
+#   _print_desc <task>
+#
+# Prints the description for a given task, provided the description has been
+# set using the desc() function.
+_print_desc() {
+  var="_desc_$1"
+  if [[ -n ${!var} ]]; then
+    printf "%s\n" "${!var}"
+  else
+   printf "No additional information for \`%s\`\n" "$1"
+  fi
+}
+
+###############################################################################
+# Default Commands
+###############################################################################
+
+# Help ########################################################################
+
+desc help <<EOM
+Usage:
+  $_me help [<command>]
+
+Display help information for $_me or a specified command
+EOM
+help() {
+  if [[ $# = 0 ]]; then
+    cat <<EOM
+
+          _ _                        _
+     __ _(_) |_      _ __   ___  ___| |_
+    / _\` | | __|____| '_ \\ / _ \\/ __| __|
+   | (_| | | ||_____| | | |  __/\\__ \\ |_
+    \\__, |_|\\__|    |_| |_|\\___||___/\\__|
+    |___/
+
+Improved git subtrees.
+
+Usage:
+  $_me command [<command-arguments>]
+
+Help:
+  $_me help [<command>]
+
+$(commands)
+EOM
+  else
+    _print_desc "$1"
+  fi
+}
+
+
+# Command List ################################################################
+
+desc commands <<EOM
+Usage:
+  $_me commands [--raw]
+
+Display the list of available commands.
+EOM
+commands() {
+  function_list=($(declare -F))
+  command_list=()
+  for t in "${function_list[@]}"
+  do
+    if ! ( [[ $t == "declare" ]] || \
+           [[ $t == "-f" ]] || \
+           [[ "$t" =~ ^_(.*) ]] || \
+           [[ "$t" == "desc" ]]
+    ); then
+      command_list+=("$t")
+    fi
+  done
+  if _contains "--raw" "${command_options[@]}"; then
+    printf "%s " "${command_list[@]}"
+  else
+    printf "Available commands:\n"
+    printf "  %s\n" "${command_list[@]}"
+  fi
+}
+
+
+
+###############################################################################
+# Commands
+# ========.....................................................................
+#
+# Example command group:
+#
+# desc example ""   - Optional. A short description for the command.
+# example() { : }   - The command called by the use.
+#
+#
+# desc example <<EOM
+#   Example help text. Options specified with http://docopt.org/
+# EOM
+# example() {
+#   echo "Hello, World!"
+# }
+#
+###############################################################################
+
+# ------------------------------------------------------------------------- add
+
+desc add <<EOM
+Usage: $_me add <repository> [<path>]
+
+Adds the repository.
+EOM
+add() {
+  [[ -z $1 ]] && printf "Repository required.\n" && exit 1
+  repo_url=$1
+
+  _debug && printf "repo_url: %s\n" "$repo_url"
+  if [[ -n "$2" ]]; then
+    target_dir=$2
+  else
+    repo_basename=$(basename "$repo_url")
+    target_dir=${repo_basename%.git}
+  fi
+
+  # TODO: consider prefixing with 'nests'
+  # remote_name="nests/$target_dir"
+  #
+  # could also use nests/ prefix for listing all nests, rather than using
+  # a .gitnests file, which would probably be better, anyway, since a .gitnests
+  # file could be confusing.
+  remote_name=$target_dir
+
+
+  _debug && printf "target_dir: %s\n" "$target_dir"
+  _debug && printf "remote_name: %s\n" "$remote_name"
+  _debug && printf "git remote add -f %s\n" "$remote_name" "$repo_url"
+  _debug && printf "git merge -s ours --no-commit %s/master\n" "$remote_name"
+  _debug && printf "git read-tree --prefix=%s -u %s/master\n" "$target_directory" "$remote_name"
+
+  git remote add -f "$remote_name" "$repo_url"
+  git merge -s ours --no-commit "$remote_name/master"
+  git read-tree --prefix="$target_dir" -u "$remote_name/master"
+}
+
+# ------------------------------------------------------------------------ pull
+
+desc pull <<EOM
+Usage: $_me pull <subtree/path> <branch>
+EOM
+pull() {
+  [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
+  [[ -z $2 ]] && printf "Branch required.\n" && exit 1
+  remote_name=$1
+  branch_name=$2
+
+  _debug && printf "git pull -s subtree %s %s\n" "$remote_name" "$branch_name"
+  git pull -s subtree "$remote_name" "$branch_name"
+}
+
+# ----------------------------------------------------------------------- fetch
+
+desc fetch <<EOM
+Usage: $_me fetch <remote> [<branch>]
+EOM
+fetch() {
+  [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
+  remote_name=$1
+  branch_name=$2
+  if [[ -n "$branch_name" ]]; then
+    _debug && printf "git fetch %s %s\n" "$remote_name" "$branch_name"
+    git fetch "$remote_name" "$branch_name"
+  else
+    _debug && printf "git fetch %s\n" "$remote_name"
+    git fetch "$remote_name"
+  fi
+}
+
+# ----------------------------------------------------------------------- merge
+
+desc merge <<EOM
+Usage: $_me merge <remote/branch>
+EOM
+merge() {
+  [[ -z $1 ]] && printf "Remote/branch required.\n" && exit 1
+  ref=$1
+
+  _debug && printf "git merge -s subtree %s\n" "$ref"
+  git merge -s subtree "$ref"
+}
+
+# ---------------------------------------------------------------------- deinit
+
+desc deinit <<EOM
+Usage: $_me deinit <subtree/path>
+EOM
+deinit() {
+  [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
+  remote_name=${1%/}
+
+  _debug && printf "git remote rm %s\n" "$remote_name"
+  git remote rm "$remote_name"
+}
+
+# -------------------------------------------------------------------------- rm
+
+desc rm <<EOM
+Usage: $_me rm <subtree/path>
+EOM
+rm() {
+  [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
+  target_dir=$1
+  remote_name=${1%/}
+
+  _debug && printf "git remote rm %s\n" "$remote_name"
+  _debug && printf "git rm -r %s\n" "$target_dir"
+  git remote rm "$remote_name"
+  git rm -r "$target_dir"
+}
+
+###############################################################################
+# Run Program
+###############################################################################
+
+# Calling the _main function after everything has been defined.
+_main
+
