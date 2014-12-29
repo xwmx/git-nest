@@ -64,7 +64,7 @@ while [ $# -gt 0 ]; do
   shift
   case "$opt" in
     -h|--help)
-      command="help"
+      cmd="help"
       ;;
     --debug)
       debug=1
@@ -75,16 +75,16 @@ while [ $# -gt 0 ]; do
     *)
       # The first non-option argument is assumed to be the command name.
       # All subsequent arguments are added to $command_arguments.
-      if [[ -n $command ]]; then
+      if [[ -n $cmd ]]; then
         command_arguments+=("$opt")
       else
-        command=$opt
+        cmd=$opt
       fi
       ;;
   esac
 done
 
-_debug && printf "\$command: %s\n" "$command"
+_debug && printf "\$cmd: %s\n" "$cmd"
 _debug && printf "\$raw_options: %s\n" "$raw_options"
 _debug && printf "\$command_options: %s\n" "${command_options[*]}"
 _debug && printf "\$command_arguments: %s\n" "${command_arguments[*]}"
@@ -111,21 +111,21 @@ _debug && printf "\$_me: %s\n" "$_me"
 #
 # The primary function for starting the program.
 #
-# NOTE: must be called at end of program after all tasks have been defined.
+# NOTE: must be called at end of program after all commands have been defined.
 _main() {
-  # If $command is blank, then set to help
-  if [[ -z $command ]]; then
-    command="help"
+  # If $cmd is blank, then set to help
+  if [[ -z $cmd ]]; then
+    cmd="help"
   fi
 
-  # Get the list of defined tasks.
+  # Get the list of defined commands.
   defined_commands=($(commands --raw))
 
-  # Run the command and pass the task arguments.
-  if ( _contains "$command" "${defined_commands[@]}" ); then
-    $command "${command_arguments[@]}"
+  # Run the command and pass the command arguments.
+  if ( _contains "$cmd" "${defined_commands[@]}" ); then
+    $cmd "${command_arguments[@]}"
   else
-    printf "Unknown command: %s\n" "$command"
+    printf "Unknown command: %s\n" "$cmd"
     exit 1
   fi
 }
@@ -182,9 +182,9 @@ EOM
 # _print_desc()
 #
 # Usage:
-#   _print_desc <task>
+#   _print_desc <command>
 #
-# Prints the description for a given task, provided the description has been
+# Prints the description for a given command, provided the description has been
 # set using the desc() function.
 _print_desc() {
   var="_desc_$1"
@@ -245,14 +245,14 @@ EOM
 commands() {
   function_list=($(declare -F))
   command_list=()
-  for t in "${function_list[@]}"
+  for c in "${function_list[@]}"
   do
-    if ! ( [[ $t == "declare" ]] || \
-           [[ $t == "-f" ]] || \
-           [[ "$t" =~ ^_(.*) ]] || \
-           [[ "$t" == "desc" ]]
+    if ! ( [[ "$c" == "declare" ]] || \
+           [[ "$c" == "-f" ]] || \
+           [[ "$c" =~ ^_(.*) ]] || \
+           [[ "$c" == "desc" ]]
     ); then
-      command_list+=("$t")
+      command_list+=("$c")
     fi
   done
   if _contains "--raw" "${command_options[@]}"; then
@@ -262,8 +262,6 @@ commands() {
     printf "  %s\n" "${command_list[@]}"
   fi
 }
-
-
 
 ###############################################################################
 # Commands
