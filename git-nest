@@ -42,8 +42,8 @@
 # intended to be used before a printf statement.
 #
 # Usage:
-#   _debug && printf "Debug info"
-_debug() { [[ -n "$debug" ]]; }
+#   _debug printf "Debug info"
+_debug() { [[ -n "$debug" ]] && "$@"; }
 
 ###############################################################################
 # Options
@@ -84,10 +84,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-_debug && printf "\$cmd: %s\n" "$cmd"
-_debug && printf "\$raw_options: %s\n" "$raw_options"
-_debug && printf "\$command_options: %s\n" "${command_options[*]}"
-_debug && printf "\$command_arguments: %s\n" "${command_arguments[*]}"
+_debug printf "\$cmd: %s\n" "$cmd"
+_debug printf "\$raw_options: %s\n" "$raw_options"
+_debug printf "\$command_options: %s\n" "${command_options[*]}"
+_debug printf "\$command_arguments: %s\n" "${command_arguments[*]}"
 
 ###############################################################################
 # Environment
@@ -98,7 +98,7 @@ _debug && printf "\$command_arguments: %s\n" "${command_arguments[*]}"
 # Set to the program's basename.
 _me=$(basename "$0")
 
-_debug && printf "\$_me: %s\n" "$_me"
+_debug printf "\$_me: %s\n" "$_me"
 
 ###############################################################################
 # Main
@@ -293,7 +293,7 @@ add() {
   [[ -z $1 ]] && printf "Repository required.\n" && exit 1
   repo_url=$1
 
-  _debug && printf "repo_url: %s\n" "$repo_url"
+  _debug printf "repo_url: %s\n" "$repo_url"
   if [[ -n "$2" ]]; then
     target_dir=$2
   else
@@ -310,11 +310,11 @@ add() {
   remote_name=$target_dir
 
 
-  _debug && printf "target_dir: %s\n" "$target_dir"
-  _debug && printf "remote_name: %s\n" "$remote_name"
-  _debug && printf "git remote add -f %s\n" "$remote_name" "$repo_url"
-  _debug && printf "git merge -s ours --no-commit %s/master\n" "$remote_name"
-  _debug && printf "git read-tree --prefix=%s -u %s/master\n" "$target_directory" "$remote_name"
+  _debug printf "target_dir: %s\n" "$target_dir"
+  _debug printf "remote_name: %s\n" "$remote_name"
+  _debug printf "git remote add -f %s\n" "$remote_name" "$repo_url"
+  _debug printf "git merge -s ours --no-commit %s/master\n" "$remote_name"
+  _debug printf "git read-tree --prefix=%s -u %s/master\n" "$target_directory" "$remote_name"
 
   git remote add -f "$remote_name" "$repo_url"
   git merge -s ours --no-commit "$remote_name/master"
@@ -332,7 +332,7 @@ pull() {
   remote_name=$1
   branch_name=$2
 
-  _debug && printf "git pull -s subtree %s %s\n" "$remote_name" "$branch_name"
+  _debug printf "git pull -s subtree %s %s\n" "$remote_name" "$branch_name"
   git pull -s subtree "$remote_name" "$branch_name"
 }
 
@@ -346,10 +346,10 @@ fetch() {
   remote_name=$1
   branch_name=$2
   if [[ -n "$branch_name" ]]; then
-    _debug && printf "git fetch %s %s\n" "$remote_name" "$branch_name"
+    _debug printf "git fetch %s %s\n" "$remote_name" "$branch_name"
     git fetch "$remote_name" "$branch_name"
   else
-    _debug && printf "git fetch %s\n" "$remote_name"
+    _debug printf "git fetch %s\n" "$remote_name"
     git fetch "$remote_name"
   fi
 }
@@ -363,7 +363,7 @@ merge() {
   [[ -z $1 ]] && printf "Remote/branch required.\n" && exit 1
   ref=$1
 
-  _debug && printf "git merge -s subtree %s\n" "$ref"
+  _debug printf "git merge -s subtree %s\n" "$ref"
   git merge -s subtree "$ref"
 }
 
@@ -376,7 +376,7 @@ deinit() {
   [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
   remote_name=${1%/}
 
-  _debug && printf "git remote rm %s\n" "$remote_name"
+  _debug printf "git remote rm %s\n" "$remote_name"
   git remote rm "$remote_name"
 }
 
@@ -390,8 +390,8 @@ rm() {
   target_dir=$1
   remote_name=${1%/}
 
-  _debug && printf "git remote rm %s\n" "$remote_name"
-  _debug && printf "git rm -r %s\n" "$target_dir"
+  _debug printf "git remote rm %s\n" "$remote_name"
+  _debug printf "git rm -r %s\n" "$target_dir"
   git remote rm "$remote_name"
   git rm -r "$target_dir"
 }
