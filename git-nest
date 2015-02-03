@@ -202,10 +202,17 @@ _function_exists() {
 # Takes an item and a list and determines whether the list contains the item.
 #
 # Usage:
-#   _contains "$item" "${list[@]}"
+#   _contains "$item" "${list[*]}"
 _contains() {
-  local e
-  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  local test_list=(${*:2})
+  for _test_element in "${test_list[@]:-}"
+  do
+    _debug printf "_contains() \$_test_element: %s\n" "$_test_element"
+    if [[ "$_test_element" == "$1" ]]; then
+      _debug printf "_contains() match: %s\n" "$1"
+      return 0
+    fi
+  done
   return 1
 }
 
