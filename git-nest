@@ -44,8 +44,26 @@
 # intended to be used before a printf statement.
 #
 # Usage:
-#   _debug printf "Debug info"
-_debug() { [[ -n "$debug" ]] && "$@"; }
+#   _debug printf "Debug info. Variable: %s\n" "$0"
+_debug() {
+  if [[ "${_use_debug:-"0"}" -eq 1 ]]; then
+    # Prefix debug message with "bug (U+1F41B)"
+    printf "🐛  "
+    "$@"
+    printf "――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――\n"
+  fi
+}
+# debug()
+#
+# Uses the more familiar syntax and echo so printf can be avoided if desired.
+# I prefer printf, personally, since it's more explicit, but I acknowledge that
+# it's more cumbersome.
+#
+# Usage:
+#   debug "Debug info. Variable: $0"
+debug() {
+  _debug echo "$@"
+}
 
 ###############################################################################
 # Options
