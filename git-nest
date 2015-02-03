@@ -671,9 +671,11 @@ commands() {
 # ------------------------------------------------------------------------- add
 
 desc add <<EOM
-Usage: $_me add <repository> [<path>]
+Usage:
+  $_me add <repository> [<path>]
 
-Adds the repository.
+Description:
+  Adds the repository.
 EOM
 add() {
   [[ -z $1 ]] && printf "Repository required.\n" && exit 1
@@ -710,7 +712,8 @@ add() {
 # ------------------------------------------------------------------------ pull
 
 desc pull <<EOM
-Usage: $_me pull <subtree/path> <branch>
+Usage:
+  $_me pull <subtree/path> <branch>
 EOM
 pull() {
   [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
@@ -725,7 +728,8 @@ pull() {
 # ----------------------------------------------------------------------- fetch
 
 desc fetch <<EOM
-Usage: $_me fetch <remote> [<branch>]
+Usage:
+  $_me fetch <remote> [<branch>]
 EOM
 fetch() {
   [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
@@ -743,7 +747,8 @@ fetch() {
 # ----------------------------------------------------------------------- merge
 
 desc merge <<EOM
-Usage: $_me merge <remote/branch>
+Usage:
+  $_me merge <remote/branch>
 EOM
 merge() {
   [[ -z $1 ]] && printf "Remote/branch required.\n" && exit 1
@@ -756,7 +761,8 @@ merge() {
 # ---------------------------------------------------------------------- deinit
 
 desc deinit <<EOM
-Usage: $_me deinit <subtree/path>
+Usage:
+  $_me deinit <subtree/path>
 EOM
 deinit() {
   [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
@@ -769,7 +775,8 @@ deinit() {
 # -------------------------------------------------------------------------- rm
 
 desc rm <<EOM
-Usage: $_me rm <subtree/path>
+Usage:
+  $_me rm <subtree/path>
 EOM
 rm() {
   [[ -z $1 ]] && printf "Remote name required.\n" && exit 1
