@@ -703,7 +703,7 @@ add() {
   _debug printf "remote_name: %s\n" "$remote_name"
   _debug printf "git remote add -f %s\n" "$remote_name" "$repo_url"
   _debug printf "git merge -s ours --no-commit %s/master\n" "$remote_name"
-  _debug printf "git read-tree --prefix=%s -u %s/master\n" "$target_directory" "$remote_name"
+  _debug printf "git read-tree --prefix=%s -u %s/master\n" "$target_dir" "$remote_name"
 
   git remote add -f "$remote_name" "$repo_url"
   git merge -s ours --no-commit "$remote_name/master"
